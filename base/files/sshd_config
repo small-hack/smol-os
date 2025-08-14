@@ -1,5 +1,5 @@
 Include /etc/ssh/sshd_config.d/*.conf
-Port 1312
+Port 22
 LoginGraceTime 0
 PermitRootLogin no
 PubkeyAuthentication yes
