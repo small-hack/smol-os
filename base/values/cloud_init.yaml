@@ -12,16 +12,16 @@ cloudinit:
   # https://cloudinit.readthedocs.io/en/latest/reference/modules.html
 
   # -- name of secret in which to save the user-data file
-  secret_name: test-scrapmetal-user-data
+  secret_name: base-user-data
   # -- image version
   image: deserializeme/kv-cloud-init:v0.0.1
   # -- Choose weather to create a service-account or not. Once a SA has been created
   # you should set this to false on subsequent runs.
   serviceAccount:
     create: true
-    name: cloud-init-sa
+    name: smol-os-base
     # Ignored is `create` set to true
-    existingServiceAccountName: "cloud-init-sa"
+    existingServiceAccountName: "smol-os-base"
   # -- Set up mount points. mounts contains a list of lists.
   # The inner list contains entries for an /etc/fstab line
   mounts: []
