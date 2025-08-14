@@ -1,0 +1,40 @@
+################################################################################
+#  _   _      _                      _      ____       _ _      _
+# | \ | | ___| |___      _____  _ __| | __ |  _ \ ___ | (_) ___(_) ___  ___
+# |  \| |/ _ \ __\ \ /\ / / _ \| '__| |/ / | |_) / _ \| | |/ __| |/ _ \/ __|
+# | |\  |  __/ |_ \ V  V / (_) | |  |   <  |  __/ (_) | | | (__| |  __/\__ \
+# |_| \_|\___|\__| \_/\_/ \___/|_|  |_|\_\ |_|   \___/|_|_|\___|_|\___||___/
+################################################################################
+networkPolicy:
+  # -- Enable the creation of network policies
+  enabled: false
+  egress:
+    # Allow communication to Kubernetes DNS service
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow internet access
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            # Exclude traffic to Kubernetes service IPs and pods
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+  ingress:
+    # Allow internet access from the ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: "ingress-nginx"
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: "ingress-nginx"

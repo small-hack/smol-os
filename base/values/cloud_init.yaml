@@ -1,0 +1,337 @@
+################################################################################
+#   ____ _                 _ ___       _ _
+#  / ___| | ___  _   _  __| |_ _|_ __ (_) |_
+# | |   | |/ _ \| | | |/ _` || || '_ \| | __|
+# | |___| | (_) | |_| | (_| || || | | | | |_
+#  \____|_|\___/ \__,_|\__,_|___|_| |_|_|\__|
+################################################################################
+# -- Enable or disable usage of cloud-init sub-chart
+cloudinit:
+  enabled: true
+  # Not all cloud-init modules are currently supported
+  # https://cloudinit.readthedocs.io/en/latest/reference/modules.html
+
+  # -- name of secret in which to save the user-data file
+  secret_name: test-scrapmetal-user-data
+  # -- image version
+  image: deserializeme/kv-cloud-init:v0.0.1
+  # -- Choose weather to create a service-account or not. Once a SA has been created
+  # you should set this to false on subsequent runs.
+  serviceAccount:
+    create: true
+    name: cloud-init-sa
+    # Ignored is `create` set to true
+    existingServiceAccountName: "cloud-init-sa"
+  # -- Set up mount points. mounts contains a list of lists.
+  # The inner list contains entries for an /etc/fstab line
+  mounts: []
+  # - [ /dev/vdb, /media, "ext4", "defaults,nofail,discard", "0", "0" ]
+
+  # -- creates a swap file using human-readable values.
+  swap:
+    enabled: true
+    filename: /swapfile
+    size: 1G
+    maxsize: 1G
+  disk_setup: []
+  # # -- The name of the device.
+  # - name: /dev/vdb
+  #   # -- This is a list of values, with the percentage of disk that
+  #   # the partition will take. When layout is “true”, it instructs cloud-init
+  #   # to single-partition the entire device. When layout is “false” it means
+  #   # “don’t partition” or “ignore existing partitioning”.
+  #   layout: true
+  #   # -- “false” is the default which means that the device will be checked for
+  #   # a partition table and/or filesystem. “true” is cowboy mode, no checks.
+  #   overwrite: false
+  #   # -- Supported options ate `gpt` and `mbr`
+  #   table_type: 'gpt'
+
+  fs_setup: []
+  # # -- The device name.
+  # - device: /dev/vdb
+  #   # -- The filesystem type. Supports ext{2,3,4} and vfat
+  #   filesystem: ext4
+  #   # -- The filesystem label to be used. If set to “None”, no label is used.
+  #   label: None
+  #   # -- Options are `auto` or `any`
+  #   partition: 'auto'
+
+  # -- Dont recreate script configmap. Set to true when keeping multiple
+  # cloud-init secrets in the same namespace
+  existingConfigMap: false
+  # -- Run envsubst against bootcmd and runcmd fields at the beginning of templating
+  # Not an official part of cloid-init
+  envsubst: true
+  extraEnvVars:
+    - name: USERNAME
+      value: friend
+    - name: NOVNC_VERSION
+      value: 1.4.0
+  # -- virtual-machine hostname
+  hostname: onboardme
+  # -- namespace in which to create resources
+  namespace: kubevirt
+  # -- Disable root login over ssh
+  disable_root: false
+  # -- when enabled job sleeps to allow user to exec into the container
+  debug: false
+  # -- salt used for password generation
+  salt: "saltsaltlettuce"
+  # -- networking options
+  network:
+    # --  disable cloud-init’s network configuration capability and rely on
+    # other methods such as embedded configuration or other customisations.
+    config: disabled
+  # -- add wireguard configuration from existing secret or as plain-text
+  # See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#wireguard
+  wireguard: []
+  #  interfaces:
+  #    - name: wg0
+  #      config_path: /etc/wireguard/wg0.conf
+  #      existingSecret:
+  #        name: wg0-credentials
+  #        key: wg0.conf
+
+  # -- user configuration options
+  # See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#users-and-groups
+  # do NOT use 'admin' as username - it conflicts with multiele cloud-images
+  users:
+    - name: friend
+      groups: users, admin, docker, sudo, kvm
+      sudo: ALL=(ALL) NOPASSWD:ALL
+      shell: /bin/bash
+      lock_passwd: false
+      # -- set user password from existing secret or generate random
+      password:
+        random: true
+      #  random: false
+      #  existingSecret:
+      #    name: admin-password
+      #    key: password
+
+      # -- import user ssh public keys from github, gitlab, or launchpad
+      # See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#ssh
+      ssh_import_id: []
+      # -- provider user ssh pub key as plaintext
+      ssh_authorized_keys: []
+  # -- Add CA certificates
+  # See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#ca-certificates
+  ca_certs: []
+  #  remove_defaults: true
+  #  trusted:
+  #    - certificate
+
+  # -- Run arbitrary commands early in the boot process
+  # See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#bootcmd
+  boot_cmd:
+    - mkdir -p /home/${USERNAME}/.config/systemd/user
+  # -- Write arbitrary files to disk.
+  # Files my be provided as plain-text or downloaded from a url
+  # See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#write-files
+  write_files:
+    - path: /etc/apt/sources.list
+      url: https://raw.githubusercontent.com/small-hack/smol-metal/refs/heads/main/etc-apt-sources.list
+      permissions: '0644'
+    - path: /etc/modprobe.d/nouveau.conf
+      content: |-
+        blacklist nouveau
+      permissions: '0644'
+    - path: /etc/default.locale
+      url: https://raw.githubusercontent.com/small-hack/smol-metal/refs/heads/main/etc-default-locale
+      permissions: '0644'
+    - path: /etc/default/keyboard
+      url: https://raw.githubusercontent.com/small-hack/smol-metal/refs/heads/main/etc-default-keyboard
+      permissions: '0644'
+    - path: /home/${USERNAME}/runner.sh
+      url: https://raw.githubusercontent.com/small-hack/smol-metal/refs/heads/main/gha-runner.sh
+      permissions: '0644'
+    - path: /etc/netplan/99-config.yaml
+      permissions: '0600'
+      content: |-
+        ---
+        network:
+          version: 2
+          renderer: networkd
+          ethernets:
+            enp1s0:
+              dhcp4: true
+              mtu: 1500
+    - path: /etc/nvidia/gridd.conf
+      permissions: '0644'
+      content: |-
+        ServerAddress="https://vgpu.buildstars.online"
+        ServerPort=443
+        FeatureType=0
+    - path: /etc/X11/Xwrapper.config
+      permissions: '0644'
+      url: https://raw.githubusercontent.com/small-hack/smol-metal/refs/heads/main/Xwrapper.config
+    - path: /etc/udev/rules.d/60-sunshine.rules
+      permissions: '0644'
+      content: |-
+        KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"
+    - path: /etc/environment
+      permissions: '0644'
+      url: https://raw.githubusercontent.com/small-hack/smol-metal/refs/heads/main/environmment.txt
+  # -- Update, upgrade, and install packages
+  # See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#package-update-upgrade-install
+  package_reboot_if_required: true
+  package_update: true
+  package_upgrade: true
+  packages:
+    - wireguard
+    - ssh-import-id
+    - sudo
+    - curl
+    - tmux
+    - netplan.io
+    - apt-transport-https
+    - ca-certificates
+    - software-properties-common
+    - htop
+    - git-extras
+    - rsyslog
+    - vim
+    - gpg
+    - open-iscsi
+    - nfs-common
+    - ncdu
+    - bc
+    - zip
+    - unzip
+    - pkg-config
+    - iotop
+    - cron
+    - pipx
+    - qemu-guest-agent
+    - xinit
+    - xorg
+    - firefox-esr
+    - xfce4-goodies
+    - x11-utils
+    - x11vnc
+    - xvfb
+    - dbus-x11
+    - accountsservice
+    - xfce4
+    - nvtop
+    - build-essential
+    - dkms
+    - mdevctl
+    - firmware-misc-nonfree
+    - linux-headers-amd64
+    - gcc
+    - make
+    - libvulkan1
+    - libglvnd-dev
+    - uuid-runtime
+    - pciutils
+    ## Novnc
+    - autoconf
+    - automake
+    - autotools-dev
+    - chrpath
+    - debhelper
+    - git
+    - jq
+    - python3-numpy
+    - libc6-dev
+    - libcairo2-dev
+    - libjpeg-turbo-progs
+    - libjpeg-dev
+    - libssl-dev
+    - libv4l-dev
+    - libvncserver-dev
+    - libtool-bin
+    - libxdamage-dev
+    - libxinerama-dev
+    - libxrandr-dev
+    - libxss-dev
+    - libxtst-dev
+    - libavahi-client-dev
+  # -- Run arbitrary commands
+  # See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#runcmd
+  runcmd:
+    #####################
+    # NoVNC
+    - rm -rf /var/lib/apt/lists/*
+    - git clone "https://github.com/LibVNC/x11vnc.git" /tmp/x11vnc
+    - cd /tmp/x11vnc && autoreconf -fi && ./configure && make install && cd / && rm -rf /tmp/*
+    - curl -fsSL "https://github.com/novnc/noVNC/archive/v${NOVNC_VERSION}.tar.gz" | tar -xzf - -C /opt
+    - mv -f "/opt/noVNC-${NOVNC_VERSION}" /opt/noVNC
+    - ln -snf /opt/noVNC/vnc.html /opt/noVNC/index.html
+    - git clone "https://github.com/novnc/websockify.git" /opt/noVNC/utils/websockify
+    - sudo chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
+    #####################
+    # Apply netplan config
+    - /usr/sbin/netplan --debug generate
+    - /usr/sbin/netplan --debug apply
+    - sleep 5
+    - rm /etc/netplan/50*
+    ######################
+    # Install YQ
+    - wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+    - chmod +x /usr/bin/yq
+    ######################
+    # install kdiskmark
+    - wget https://github.com/JonMagon/KDiskMark/releases/download/3.1.4/kdiskmark_3.1.4-debian_amd64.deb
+    - sudo apt-get install -y -f ./kdiskmark_3.1.4-debian_amd64.deb
+    ######################
+    # Install Docker
+    - curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    - echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    - sudo apt-get update
+    - sudo apt-get install -y docker-ce
+    ########################
+    # Brew and Python3
+    - wget https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
+    - chmod +x /install.sh
+    - chmod 777 /install.sh
+    - sudo chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
+    - su - ${USERNAME} -c "NONINTERACTIVE=1 /bin/bash /install.sh"
+    - su - ${USERNAME} -c "/home/linuxbrew/.linuxbrew/bin/brew shellenv >> /home/${USERNAME}/.profile"
+    - su - ${USERNAME} -c "/home/linuxbrew/.linuxbrew/bin/brew install python@3.12"
+    - su - ${USERNAME} -c "/home/linuxbrew/.linuxbrew/opt/python@3.12/libexec/bin >> /home/${USERNAME}/.profile"
+    - sudo chown -R ${USERNAME}:${USERNAME} /home/linuxbrew
+    - sudo add-apt-repository -y ppa:deadsnakes/ppa
+    - sudo apt install -y python3.12
+    - curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12
+    - sudo -u ${USERNAME} echo 'export PATH="$PATH:$HOME/.local/bin/"' >> /home/${USERNAME}/.profile
+    #######################
+    # Steam
+    - sudo dpkg --add-architecture i386
+    - sudo apt-get update
+    #- apt-get install -y steam-installer
+    ######################
+    # Nvidia Driver
+    - sudo systemctl stop lightdm
+    - sudo systemctl disable lightdm
+    - wget https://buildstars.online/guest/NVIDIA-Linux-x86_64-550.90.07-grid.run
+    - sudo bash NVIDIA-Linux-x86_64-550.90.07-grid.run --compat32-prefix=/usr --compat32-libdir=lib32 --dkms --silent --install-compat32-libs --no-check-for-alternate-installs --no-backup
+    - wget --no-check-certificate -O /etc/nvidia/ClientConfigToken/client_configuration_token_$(date '+%d-%m-%Y-%H-%M-%S').tok https://vgpu.buildstars.online/-/client-token
+    - sudo systemctl restart lightdm
+    ######################
+    # Nvidia Container Runtime
+    - curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg && curl -s -L https://nvidia.github.io/libnvidia-container/debian11/libnvidia-container.list | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+    - sudo apt-get update
+    - sudo apt-get install -y nvidia-container-toolkit
+    - sudo nvidia-ctk runtime configure --runtime=docker
+    - sudo systemctl restart docker
+    ######################
+    # Sunshine
+    - wget https://github.com/LizardByte/Sunshine//releases/download/v0.23.1/sunshine-debian-bookworm-amd64.deb
+    - apt-get install -y -f ./sunshine-debian-bookworm-amd64.deb
+    - sudo udevadm control --reload-rules
+    - sudo udevadm trigger
+    - sudo modprobe uinput
+    - sudo setcap -r $(readlink -f $(which sunshine))
+    #####################
+    # Onboardme
+    - sudo rm /usr/lib/python3.*/EXTERNALLY-MANAGED
+    - su - ${USERNAME} -c "pipx install onboardme"
+    - su - ${USERNAME} -c "/home/${USERNAME}/.local/bin/onboardme -O -s dot_files"
+    - su - ${USERNAME} -c "source /etc/environment && /home/${USERNAME}/.local/bin/onboardme -O"
+    #####################
+    # Cleanup
+    - sudo nvidia-xconfig
+    - sudo cloud-init clean --logs

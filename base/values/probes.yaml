@@ -1,0 +1,23 @@
+################################################################################
+#  ____            _
+# |  _ \ _ __ ___ | |__   ___  ___
+# | |_) | '__/ _ \| '_ \ / _ \/ __|
+# |  __/| | | (_) | |_) |  __/\__ \
+# |_|   |_|  \___/|_.__/ \___||___/
+################################################################################
+# -- set tieming and port number for liveness probe
+#  livenessProbe:
+#  initialDelaySeconds: 60
+#  periodSeconds: 10
+#  tcpSocket:
+#    port: 8080
+#  timeoutSeconds: 10
+# -- set tieming and port number for readiness probe
+# readinessProbe:
+#   initialDelaySeconds: 60
+#   periodSeconds: 10
+#   timeoutSeconds: 10
+#   failureThreshold: 6
+#   successThreshold: 1
+#   httpGet:
+#     port: 8080
