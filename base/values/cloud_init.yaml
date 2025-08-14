@@ -66,8 +66,6 @@ cloudinit:
   extraEnvVars:
     - name: USERNAME
       value: friend
-    - name: NOVNC_VERSION
-      value: 1.4.0
   # -- virtual-machine hostname
   hostname: onboardme
   # -- namespace in which to create resources
@@ -123,8 +121,7 @@ cloudinit:
 
   # -- Run arbitrary commands early in the boot process
   # See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#bootcmd
-  boot_cmd:
-    - mkdir -p /home/${USERNAME}/.config/systemd/user
+  boot_cmd: []
   # -- Write arbitrary files to disk.
   # Files my be provided as plain-text or downloaded from a url
   # See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#write-files
@@ -203,16 +200,6 @@ cloudinit:
     - cron
     - pipx
     - qemu-guest-agent
-    - xinit
-    - xorg
-    - firefox-esr
-    - xfce4-goodies
-    - x11-utils
-    - x11vnc
-    - xvfb
-    - dbus-x11
-    - accountsservice
-    - xfce4
     - nvtop
     - build-essential
     - dkms
@@ -225,42 +212,11 @@ cloudinit:
     - libglvnd-dev
     - uuid-runtime
     - pciutils
-    ## Novnc
-    - autoconf
-    - automake
-    - autotools-dev
-    - chrpath
-    - debhelper
     - git
     - jq
-    - python3-numpy
-    - libc6-dev
-    - libcairo2-dev
-    - libjpeg-turbo-progs
-    - libjpeg-dev
-    - libssl-dev
-    - libv4l-dev
-    - libvncserver-dev
-    - libtool-bin
-    - libxdamage-dev
-    - libxinerama-dev
-    - libxrandr-dev
-    - libxss-dev
-    - libxtst-dev
-    - libavahi-client-dev
   # -- Run arbitrary commands
   # See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#runcmd
   runcmd:
-    #####################
-    # NoVNC
-    - rm -rf /var/lib/apt/lists/*
-    - git clone "https://github.com/LibVNC/x11vnc.git" /tmp/x11vnc
-    - cd /tmp/x11vnc && autoreconf -fi && ./configure && make install && cd / && rm -rf /tmp/*
-    - curl -fsSL "https://github.com/novnc/noVNC/archive/v${NOVNC_VERSION}.tar.gz" | tar -xzf - -C /opt
-    - mv -f "/opt/noVNC-${NOVNC_VERSION}" /opt/noVNC
-    - ln -snf /opt/noVNC/vnc.html /opt/noVNC/index.html
-    - git clone "https://github.com/novnc/websockify.git" /opt/noVNC/utils/websockify
-    - sudo chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
     #####################
     # Apply netplan config
     - /usr/sbin/netplan --debug generate
@@ -271,10 +227,6 @@ cloudinit:
     # Install YQ
     - wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
     - chmod +x /usr/bin/yq
-    ######################
-    # install kdiskmark
-    - wget https://github.com/JonMagon/KDiskMark/releases/download/3.1.4/kdiskmark_3.1.4-debian_amd64.deb
-    - sudo apt-get install -y -f ./kdiskmark_3.1.4-debian_amd64.deb
     ######################
     # Install Docker
     - curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
@@ -296,11 +248,6 @@ cloudinit:
     - sudo apt install -y python3.12
     - curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12
     - sudo -u ${USERNAME} echo 'export PATH="$PATH:$HOME/.local/bin/"' >> /home/${USERNAME}/.profile
-    #######################
-    # Steam
-    - sudo dpkg --add-architecture i386
-    - sudo apt-get update
-    #- apt-get install -y steam-installer
     ######################
     # Nvidia Driver
     - sudo systemctl stop lightdm
@@ -308,7 +255,6 @@ cloudinit:
     - wget https://buildstars.online/guest/NVIDIA-Linux-x86_64-550.90.07-grid.run
     - sudo bash NVIDIA-Linux-x86_64-550.90.07-grid.run --compat32-prefix=/usr --compat32-libdir=lib32 --dkms --silent --install-compat32-libs --no-check-for-alternate-installs --no-backup
     - wget --no-check-certificate -O /etc/nvidia/ClientConfigToken/client_configuration_token_$(date '+%d-%m-%Y-%H-%M-%S').tok https://vgpu.buildstars.online/-/client-token
-    - sudo systemctl restart lightdm
     ######################
     # Nvidia Container Runtime
     - curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg && curl -s -L https://nvidia.github.io/libnvidia-container/debian11/libnvidia-container.list | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
@@ -316,21 +262,9 @@ cloudinit:
     - sudo apt-get install -y nvidia-container-toolkit
     - sudo nvidia-ctk runtime configure --runtime=docker
     - sudo systemctl restart docker
-    ######################
-    # Sunshine
-    - wget https://github.com/LizardByte/Sunshine//releases/download/v0.23.1/sunshine-debian-bookworm-amd64.deb
-    - apt-get install -y -f ./sunshine-debian-bookworm-amd64.deb
-    - sudo udevadm control --reload-rules
-    - sudo udevadm trigger
-    - sudo modprobe uinput
-    - sudo setcap -r $(readlink -f $(which sunshine))
     #####################
     # Onboardme
     - sudo rm /usr/lib/python3.*/EXTERNALLY-MANAGED
     - su - ${USERNAME} -c "pipx install onboardme"
     - su - ${USERNAME} -c "/home/${USERNAME}/.local/bin/onboardme -O -s dot_files"
     - su - ${USERNAME} -c "source /etc/environment && /home/${USERNAME}/.local/bin/onboardme -O"
-    #####################
-    # Cleanup
-    - sudo nvidia-xconfig
-    - sudo cloud-init clean --logs
