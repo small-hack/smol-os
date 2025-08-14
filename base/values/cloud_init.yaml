@@ -67,9 +67,9 @@ cloudinit:
     - name: USERNAME
       value: friend
   # -- virtual-machine hostname
-  hostname: onboardme
+  hostname: onboardme-base
   # -- namespace in which to create resources
-  namespace: kubevirt
+  namespace: smol-os
   # -- Disable root login over ssh
   disable_root: false
   # -- when enabled job sleeps to allow user to exec into the container
@@ -104,7 +104,7 @@ cloudinit:
       password:
         random: false
         existingSecret:
-          name: admin-password
+          name: smol-os-credentials
           key: password
 
       # -- import user ssh public keys from github, gitlab, or launchpad
@@ -159,13 +159,6 @@ cloudinit:
         ServerAddress="https://vgpu.buildstars.online"
         ServerPort=443
         FeatureType=0
-    - path: /etc/X11/Xwrapper.config
-      permissions: '0644'
-      url: https://raw.githubusercontent.com/small-hack/smol-metal/refs/heads/main/Xwrapper.config
-    - path: /etc/udev/rules.d/60-sunshine.rules
-      permissions: '0644'
-      content: |-
-        KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"
     - path: /etc/environment
       permissions: '0644'
       url: https://raw.githubusercontent.com/small-hack/smol-metal/refs/heads/main/environmment.txt
