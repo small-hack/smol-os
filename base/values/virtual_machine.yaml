@@ -6,7 +6,7 @@
 ###############################################################################
 virtualMachine:
   # -- name of the virtualMachine or virtualMachinePool object
-  name: test
+  name: base
   # -- namespace to deploy to
   namespace: kubevirt
   # -- Create the VM as a KubevirtMachineTemplate for use with Cluster API

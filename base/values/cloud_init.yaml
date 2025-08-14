@@ -97,18 +97,17 @@ cloudinit:
   # See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#users-and-groups
   # do NOT use 'admin' as username - it conflicts with multiele cloud-images
   users:
-    - name: friend
-      groups: users, admin, docker, sudo, kvm
+    - name: ${USERNAME}
+      groups: users, admin, docker, sudo, kvm, input
       sudo: ALL=(ALL) NOPASSWD:ALL
       shell: /bin/bash
       lock_passwd: false
       # -- set user password from existing secret or generate random
       password:
-        random: true
-      #  random: false
-      #  existingSecret:
-      #    name: admin-password
-      #    key: password
+        random: false
+        existingSecret:
+          name: admin-password
+          key: password
 
       # -- import user ssh public keys from github, gitlab, or launchpad
       # See https://cloudinit.readthedocs.io/en/latest/reference/modules.html#ssh
