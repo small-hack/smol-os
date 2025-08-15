@@ -8,7 +8,7 @@ virtualMachine:
   # -- name of the virtualMachine or virtualMachinePool object
   name: base
   # -- namespace to deploy to
-  namespace: kubevirt
+  namespace: smol-os
   # -- Create the VM as a KubevirtMachineTemplate for use with Cluster API
   # Does not support VM Pools
   capiMachineTemplate: false
