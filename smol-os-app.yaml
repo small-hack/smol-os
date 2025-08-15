@@ -1,0 +1,21 @@
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: smol-os-app-of-apps
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: 'https://10.1.0.253:6443'
+    namespace: smol-os
+  syncPolicy:
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+      - CreateNamespace=true
+    automated:
+      selfHeal: true
+  sources:
+  - repoURL: 'https://github.com/small-hack/smol-os.git'
+    targetRevision: HEAD
+    path: /

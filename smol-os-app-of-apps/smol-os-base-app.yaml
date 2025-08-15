@@ -1,0 +1,31 @@
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: smol-os-base
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: 'https://10.1.0.253:6443'
+    namespace: smol-os
+  syncPolicy:
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+      - CreateNamespace=true
+    automated:
+      selfHeal: true
+  sources:
+  - repoURL: 'https://github.com/cloudymax/kubevirt-community-stack.git'
+    targetRevision: HEAD
+    path: charts/kubevirt-vm/
+    helm:
+      valueFiles:
+      - $values/base/values/cloud_init.yaml
+      - $values/base/values/network_policies.yaml
+      - $values/base/values/probes.yaml
+      - $values/base/values/service.yaml
+      - $values/base/values/virtual_machine.yaml
+  - repoURL: 'https://github.com/small-hack/smol-os.git'
+    targetRevision: HEAD
+    ref: values
