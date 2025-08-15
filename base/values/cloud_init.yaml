@@ -236,11 +236,8 @@ cloudinit:
     - su - ${USERNAME} -c "/home/linuxbrew/.linuxbrew/bin/brew shellenv >> /home/${USERNAME}/.profile"
     - su - ${USERNAME} -c "/home/linuxbrew/.linuxbrew/bin/brew install python@3.12"
     - su - ${USERNAME} -c "/home/linuxbrew/.linuxbrew/opt/python@3.12/libexec/bin >> /home/${USERNAME}/.profile"
-    - sudo chown -R ${USERNAME}:${USERNAME} /home/linuxbrew
-    - sudo add-apt-repository -y ppa:deadsnakes/ppa
-    - sudo apt install -y python3.12
-    - curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12
-    - sudo -u ${USERNAME} echo 'export PATH="$PATH:$HOME/.local/bin/"' >> /home/${USERNAME}/.profile
+    - sudo cmod -R 0777 ${USERNAME}:${USERNAME} /home/linuxbrew
+    - sudo -u ${USERNAME} -c "echo 'export PATH="$PATH:$HOME/.local/bin/"' >> /home/${USERNAME}/.profile"
     ######################
     # Nvidia Driver
     - sudo systemctl stop lightdm
