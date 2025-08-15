@@ -226,6 +226,14 @@ cloudinit:
     - echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     - sudo apt-get update
     - sudo apt-get install -y docker-ce
+    ######################
+    # Ruby
+    - wget https://github.com/postmodern/ruby-install/releases/download/v0.10.1/ruby-install-0.10.1.tar.gz
+    - tar -xzvf ruby-install-0.10.1.tar.gz
+    - cd ruby-install-0.10.1/
+    - sudo make install
+    - cd ..
+    - ruby-install ruby 3.4.5
     ########################
     # Brew and Python3
     - sudo -u ${USERNAME} -c 'export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/opt/rubies/ruby-3.4.5/bin/" >> /home/${USERNAME}/.profile'
