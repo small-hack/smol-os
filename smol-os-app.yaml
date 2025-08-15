@@ -18,4 +18,4 @@ spec:
   sources:
   - repoURL: 'https://github.com/small-hack/smol-os.git'
     targetRevision: HEAD
-    path: /
+    path: smol-os-app-of-apps/
