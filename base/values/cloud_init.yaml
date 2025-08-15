@@ -228,20 +228,16 @@ cloudinit:
     - sudo apt-get install -y docker-ce
     ########################
     # Brew and Python3
+    - sudo -u ${USERNAME} -c 'export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/opt/rubies/ruby-3.4.5/bin/" >> /home/${USERNAME}/.profile'
     - wget -nv https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
     - chmod +x /install.sh
     - chmod 777 /install.sh
     - sudo chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
     - su - ${USERNAME} -c "NONINTERACTIVE=1 /bin/bash /install.sh"
-    - su - ${USERNAME} -c "/home/linuxbrew/.linuxbrew/bin/brew shellenv >> /home/${USERNAME}/.profile"
     - su - ${USERNAME} -c "/home/linuxbrew/.linuxbrew/bin/brew install python@3.12"
-    - su - ${USERNAME} -c "/home/linuxbrew/.linuxbrew/opt/python@3.12/libexec/bin >> /home/${USERNAME}/.profile"
     - sudo cmod -R 0777 ${USERNAME}:${USERNAME} /home/linuxbrew
-    - sudo -u ${USERNAME} -c "echo 'export PATH="$PATH:$HOME/.local/bin/"' >> /home/${USERNAME}/.profile"
     ######################
     # Nvidia Driver
-    - sudo systemctl stop lightdm
-    - sudo systemctl disable lightdm
     - wget -nv https://buildstars.online/guest/NVIDIA-Linux-x86_64-550.90.07-grid.run
     - sudo bash NVIDIA-Linux-x86_64-550.90.07-grid.run --compat32-prefix=/usr --compat32-libdir=lib32 --dkms --silent --install-compat32-libs --no-check-for-alternate-installs --no-backup
     - wget -nv --no-check-certificate -O /etc/nvidia/ClientConfigToken/client_configuration_token_$(date '+%d-%m-%Y-%H-%M-%S').tok https://vgpu.buildstars.online/-/client-token
