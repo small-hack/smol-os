@@ -236,6 +236,7 @@ cloudinit:
     - ruby-install ruby 3.4.5
     ########################
     # Brew and Python3
+    - sudo chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
     - su - ${USERNAME} -c 'export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/opt/rubies/ruby-3.4.5/bin/" >> /home/${USERNAME}/.profile'
     - wget -nv https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
     - chmod +x /install.sh
